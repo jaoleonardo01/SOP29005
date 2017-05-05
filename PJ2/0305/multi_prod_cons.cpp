@@ -5,6 +5,10 @@
 #include <errno.h>
  
 #include "thread.h"
+
+##############################
+teste teste teste teste teste
+#############################
  
 using namespace std;
  
