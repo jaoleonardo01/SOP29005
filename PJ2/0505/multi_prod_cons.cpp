@@ -12,9 +12,7 @@ using namespace std;
  
 const int PRODS = 1;
 const int REP = 10;
- 
 const int CONS = 1;
- 
 const int BUF_SIZE = 1;
  
 Thread * prods[PRODS];
@@ -32,10 +30,11 @@ Semaphore sem1(1),sem2(0);
  
 void* producer(void * arg)
 {
+	mut.lock();
 	cout << "Producer was born!" << endl;
- 
+	mut.unlock();
+	
 	int rep = REP;
- 
 	char fname[36+1];
 
 
@@ -45,7 +44,6 @@ void* producer(void * arg)
 		if(++prod_pos == BUF_SIZE) prod_pos = 0;
 		uuid_generate(buffer[prod_pos]);
 		uuid_unparse(buffer[prod_pos], fname);
- 
 		string name(fname,sizeof(uuid_t)*2 + 4);
 		ofstream file(name.c_str());
 		file << name;
@@ -59,11 +57,12 @@ void* producer(void * arg)
  
 void* consumer(void* arg)
 {
+	mut.lock();
 	cout << "Consumer was born!" << endl;
- 
+	mut.unlock(); 
+
 	char fname[36+1];
 	int consumed = 0;
- 
  
 	while(true)
 	{
@@ -74,7 +73,6 @@ void* consumer(void* arg)
  
 		if(++cons_pos == BUF_SIZE) cons_pos = 0;
 		uuid_unparse(buffer[cons_pos], fname);
-		sem1.v();
  
 		{
 			ifstream file(fname);
@@ -83,7 +81,9 @@ void* consumer(void* arg)
 			sem2.p();
 			file >> str;
 			sem1.v();
+			mut.lock();
 			cout << "Consumed: " << str << endl;
+			mut.unlock();
 		}
  
 		if(remove(fname)) cerr << "Error: " << errno << endl;
@@ -120,8 +120,11 @@ int main()
     	consumed += status;
     }
  
+    mut.lock();
     cout << "Total produced: " << produced << endl;
+    mut.unlock();
+    mut.lock();
     cout << "Total consumed: " << consumed << endl;
- 
+    mut.unlock();
     return 0;
 }
