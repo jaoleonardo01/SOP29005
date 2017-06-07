@@ -1,0 +1,3 @@
+- arquivo de biblioteca fs.a: utilizar o makefile e o mafedefs do terminall;
+
+-filesystem.o, virtualdisk.o e file.o

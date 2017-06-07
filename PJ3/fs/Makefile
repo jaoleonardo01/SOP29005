@@ -1,0 +1,14 @@
+# TerminALL LIB Makefile
+
+include ../Makedefs
+
+COMPONENTS := VirtualDisk.o #FileSystem.o File.o -> sem os .cc implementados
+
+all: FORCE $(COMPONENTS)
+	
+
+clean: FORCE
+	rm -f *.o *.a
+
+FORCE: 
+	
