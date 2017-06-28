@@ -1,0 +1,53 @@
+Correção P2:
+
+2 - verifica limite e calcula se está dentro do limite disponível do processo. é só coincidência.
+
+3 - 
+
+log2 4096 = 12
+log2 8192 = 13
+
+end log		n pag		desl		n pag	desl	
+4e20		4		e20		2	0x0e20	
+8000		8		000		4	0x0000
+b3b0		B		3b0		5	0x13b0
+
+						= 010|0
+						= 100|0
+						= 101|1
+
+4 -
+
+q		end fsc
+4		0x4e20
+P.F.		Page fault
+7		0x73B0
+
+5 -
+	* *   * *   * * * *
+FIFO	0 3 0 7 2 3 0 6 1 5 ...	16 page faults
+1	0 0 0 0 0 2 2 2 2 1 ...
+2	  3 3 3 3 3 0 0 0 5 ...
+3	      7 7 7 7 6 6 6 ...
+
+	* *   * * * * * * *
+LRU	0 3 0 7 2 3 0 6 1 5 ... 17 page faults
+1	0 0 0 0 0 3 3 3 1 1 ...
+2	  3 3 3 2 2 2 6 6 6 ...
+3	      7 7 7 0 0 0 5 ...
+
+
+8 -
+
+b = 1kB	T= 8x1kB + 128x1kB=136kB
+
+1024/8=128
+
+9 - link simbólico -> file directory, em nível de arquivo;
+    hard link	   -> device directory, em nível de hardware (i-node);
+
+10 - 	6 p/min
+	6 x 50 x 80 = 400 c/s		1/400=2,5ms -> 2500us ou 50 us? R: interrupção, pois libera tempo de proc. (2450 us)
+	-----------
+	    60
+	
