@@ -2,7 +2,7 @@
 
 include ../Makedefs
 
-COMPONENTS := VirtualDisk.o FileSystem.o #File.o -> sem os .cc implementados
+COMPONENTS := VirtualDisk.o FileSystem.o File.o -> sem os .cc implementados
 
 all: FORCE $(COMPONENTS)
 	

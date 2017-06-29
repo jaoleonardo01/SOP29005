@@ -2,10 +2,10 @@
 
 class FileSystem {
 private:
-    FileSystem(char * disk_name);
+    FileSystem(char * name);
 
 public:
-    static int create_file_system(char * disk_name);
+    static int create_file_system(char * name);
 
     ~FileSystem();
 
