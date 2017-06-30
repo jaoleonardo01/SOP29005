@@ -1,0 +1,6 @@
+- arquivo de biblioteca fs.a: utilizar o makefile e o mafedefs do terminall;
+
+-filesystem.o, virtualdisk.o e file.o
+
+https://github.com/rpereira/FAT-file-system/blob/master/vfs.c
+https://github.com/Zarana-Parekh/File-System-on-a-Virtual-Disk

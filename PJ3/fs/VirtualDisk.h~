@@ -27,4 +27,3 @@ private:
 };
 
 #endif // __VIRTUAL_DISK_H__
-
