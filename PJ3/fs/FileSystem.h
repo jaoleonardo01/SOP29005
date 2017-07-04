@@ -17,29 +17,14 @@ public:
 
     VirtualDisk * disk() { return &_disk; }
 
-    int MAX_FILES=40;
+    int MAX_FILES=64;
     int BLOCKS_PER_FILE=1;
 
 private:
-    VirtualDisk _disk;
-    static FileSystem * _fs;
-    char buf2[VirtualDisk::BLOCK_SIZE];
-    
-    struct stc_bloco{
-	int dir;
-	int dir_len;
-	int data_ind;
-    };
-
-    struct stc_diretorio{
-	int used;
-
-	char name[20];
-	int size;
-	int head;
-	int ref_count;
-	int num_blocks;
-    };
-    stc_diretorio* dir;
-    stc_bloco fsys;
+	VirtualDisk _disk;
+	static FileSystem * _fs;
+	char buf2[VirtualDisk::BLOCK_SIZE];
+	int dir,dir_len,data_ind,used,length,first,count,num_blocks;
+	char name[64];
+	int fat[8191];
 };

@@ -33,43 +33,61 @@ int FileSystem::create_file_system(char * disk_name){
 
 FileSystem::FileSystem(char * disk_name) : _disk(disk_name)
 {
-	fsys.data_ind=VirtualDisk::DISK_BLOCKS-1;
-	fsys.dir=1;
-	fsys.dir_len=1;
-	memset(buf2,0,VirtualDisk::BLOCK_SIZE);
-	memcpy(buf2,&fsys,sizeof(struct stc_bloco));
-	_disk.write_block(0,buf2);
+	this->data_ind=VirtualDisk::DISK_BLOCKS-1;
+	this->dir=1;
+	this->dir_len=1;
+	memset(fat,0,VirtualDisk::BLOCK_SIZE);
+	memcpy(fat,&this,sizeof(this);
+	_disk.write_block(0,fat);
 	cout << "FS criado" << endl;
 }
 
 int FileSystem::create_file(char * file_name){
 
+	int i=first_free_block();
+	_fs->fat[i]=
+	
 
-	int i;
+}
+
+
+int FileSystem::delete_file(char * file_name){
+	int i,j;
 
 	for(i=0;i<MAX_FILES;i++) {
-		if(dir[i].used == 0) {
-			dir[i] = *new stc_diretorio;
-			struct stc_diretorio* entry = new stc_diretorio;
-			if(entry == NULL) {
-				cout<<"diretorio nao pode ser criado"<<endl;
-				return -1;
+		if(strcmp(dir[i].name,file_name) == 0) {
+			dir[i].used = 0;
+			strcpy(dir[i].name,"");
+			dir[i].length = 0;
+			dir[i].count = 0;
+
+			for(j=0;j<MAX_FILEDES;j++) {
+				if(filedes[j].file == i) {
+					filedes[j].used = 0;
+					filedes[j].file = -1;
+					filedes[j].read_offset = 0;
+					filedes[j].write_offset = 0;
+				}
 			}
 
-			dir[i].used = 1;
-			strcpy(dir[i].name,file_name);
-			dir[i].size = 0;
-			dir[i].head = first_free_block();
-			dir[i].ref_count = 0;
-			dir[i].num_blocks = BLOCKS_PER_FILE;
+			char buf[BLOCK_SIZE] = "";
+			block_read(DISK_BLOCKS-1,buf);
+			// free allocated blocks to file
+			for(j=0;j<dir[i].num_blocks;j++) {
+				buf[dir[i].first+j] = '\0';
+			}
+
+			dir[i].first = -1;
+			dir[i].num_blocks = 0;
+			block_write(DISK_BLOCKS-1,buf);
+
 			return i;
 		}
 	}
+
+return -1; // file not found in directory
 }
 
-int FileSystem::delete_file(char * file_name){
-
-}
 
 FileSystem::~FileSystem(){}
 
