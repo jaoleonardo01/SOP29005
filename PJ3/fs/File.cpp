@@ -1,0 +1,100 @@
+#include <dirent.h>;
+#include "VirtualDisk.h";
+#include "FileSystem.h";
+
+using namespace std;
+
+File::File(char * file_name){
+	nome=file_name;
+
+	int teste = FileSystem::list_file(file_name);//necessario implementar no FileSystem
+
+	if(teste < 0) { //arquivo inexistente
+		int teste2 = Filesystem::create_file(file_name);
+
+		if(teste2 < 0) { // erro, num. max de arquivos atingido
+			cerr << "erro, num. max de arquivos atingido\n";
+			return -1;
+		} else {
+			cout<<"arquivo "<< file_name <<"  criado\n";
+			return teste2;
+		}
+	} else { // file with same name already exists
+		cerr << "ja existe arquivo com o mesmo nome\n";
+		return teste;
+	}
+
+}
+
+
+File::~File(){ //deve fechar o arquivo
+	
+	int teste = FileSystem::list_file(this.nome);//necessario implementar no FileSystem
+	FileSystem::dir[FileSystem::descricaoarquivo[teste].first_block].ref_count--;
+	FileSystem::descricaoarquivo[teste].active = 0;
+	cout<<"Arquivo fechado: " << Filesystem::dir[FileSystem::descricaoarquivo[teste].first_block].name);
+}
+
+
+int File::read(int file, void * buf, size_t bytes){
+
+	if(!FileSystem::descricaoarquivo[file].active) {
+		cerr<<"Arquivo inexiste\n"<<endl;
+		return -1;
+	}
+
+	int i, j, count = 0;
+	int offset = FileSystem::descricaoarquivo[file].offset_read;
+	char buf[VirtualDisk::BLOCK_SIZE] = "";
+
+	int head = FileSystem::dir[descricaoarquivo[file].first_block].head;
+	int block_count = 0;
+	if(offset >= VirtualDisk::BLOCK_SIZE) {
+		if(head + FileSystem::BLOCKS_PER_FILE - 1 < head + offset/VirtualDisk::BLOCK_SIZE) {
+			cerr<<"memoria excedida\n"<<endl;
+			return -1;
+		}
+		head += offset/BLOCK_SIZE;
+		block_count = offset/BLOCK_SIZE;
+		offset = offset % BLOCK_SIZE;
+	}
+
+	block_read(head,buf);
+
+	/* reading from the first block */
+	for(i=offset;i<BLOCK_SIZE;i++) {
+		dst[i-offset] = buf[i];
+		read_count++;
+		if(read_count == (int)numbyte) {
+			filedes[fd].read_offset += (int)read_count;
+			strcpy(buf,"");
+			return (int)read_count;
+		}
+	}
+
+	if(read_count == (int)numbyte) {
+		strcpy(buf,"");
+		filedes[fd].read_offset += (int)read_count;
+		return (int)read_count;
+	}
+		strcpy(buf,"");
+		/* read from other blocks or till EOF */
+	while(read_count < numbyte && block_count < BLOCKS_PER_FILE) {
+		block_read(head,buf);
+		//for(j=0;j<BLOCK_SIZE,i<strlen(dst);j++) {
+		for(j=0;j<BLOCK_SIZE;j++) {
+			dst[i-offset] = buf[j];
+			read_count++;
+			i++;
+			if(read_count == (int)numbyte ) {
+				filedes[fd].read_offset += (int)read_count;
+				return (int)read_count;
+			}
+		}
+		block_count++;
+		head++;
+		strcpy(buf,"");
+	}
+	filedes[fd].read_offset += (int)read_count;
+	return read_count;
+}

@@ -41,14 +41,14 @@ int FileSystem::create_file(char * file_name){
         stc_bloco * blc = new stc_bloco;
         int32_t Buffer_FAT[VirtualDisk::DISK_BLOCKS];
 	for(i=0;i<MAX_FILES;i++) {
-		if(_fs->dir[i].used == 0) {
+		if(_fs->dir[i].active == 0) {
 			_fs->dir[i] = *new stc_diretorio;
 			struct stc_diretorio* entry = new stc_diretorio;
 			if(entry == NULL) {
-				cout<<"diretorio nao pode ser criado"<<endl;
+				cout<<"arquivo nao pode ser criado"<<endl;
 				return -1;
 			}
-                        _fs->dir[i].used=1;
+                        _fs->dir[i].active=1;
 			strcpy(_fs->dir[i].name,file_name);
 			_fs->dir[i].size = 0;
 			_fs->dir[i].head = first_free_block();
