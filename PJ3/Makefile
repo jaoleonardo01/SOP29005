@@ -12,5 +12,4 @@ clean: FORCE
 	(cd $(LIBDIR) && make clean)
 	rm -f *.o FILESYSTEM core*
 
-FORCE: 
-	
+FORCE: 	

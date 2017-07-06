@@ -1,14 +1,11 @@
-# TerminALL LIB Makefile
+all: *.a
+	g++ fs.a -o FILESYSTEM
 
-include ../Makedefs
+*.a: *.o *.h
+	ar rvs fs.a *.o *.h
 
-COMPONENTS := VirtualDisk.o FileSystem.o #File.o -> sem os .cc implementados
+*.o: *.cpp
+	g++ -c *.cpp
 
-all: FORCE $(COMPONENTS)
-	
-
-clean: FORCE
-	rm -f *.o *.a
-
-FORCE: 
-	
+clean:
+	rm *.o

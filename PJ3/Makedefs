@@ -17,11 +17,11 @@ ifeq ($(GDB_DEBUG), 1)
 CXXFLAGS := $(CXXFLAGS) -g -O0
 endif
 
-#%_Test.o: %_Test.cc
-#	g++ $(CXXFLAGS) -c $< -o $@
-#
-#TerminALL.o: TerminALL.cc
-#	g++ $(CXXFLAGS) -c $< -o $@
+%_FILESYSTEM.o: %FILESYSTEM.cc
+	g++ $(CXXFLAGS) -c $< -o $@
+
+FILESYSTEM.o: FILESYSTEM.cc
+	g++ $(CXXFLAGS) -c $< -o $@
 
 %.o: %.cc
 	g++ $(CXXFLAGS) -c $< -o $@
