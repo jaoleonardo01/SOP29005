@@ -5,7 +5,7 @@ all: *.a
 	ar rvs fs.a *.o *.h
 
 *.o: *.cpp
-	g++ -c *.cpp
+	g++ -c -w -std=c++11 *.cpp
 
 clean:
-	rm *.o
+	rm *.o FILESYSTEM

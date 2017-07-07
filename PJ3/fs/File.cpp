@@ -1,27 +1,28 @@
 #include <dirent.h>;
+#include <unistd.h>
+#include <sys/types.h>
 #include "VirtualDisk.h";
 #include "FileSystem.h";
-
+#include "File.h";
 using namespace std;
+
+int BLC_P_F=1;
 
 File::File(char * file_name){
 	nome=file_name;
 
-	int teste = FileSystem::list_file(file_name);//necessario implementar no FileSystem
+	int teste = FileSystem::_fs->list_file(file_name);
 
 	if(teste < 0) { //arquivo inexistente
-		int teste2 = Filesystem::create_file(file_name);
+		int teste2 = FileSystem::_fs->create_file(file_name);
 
 		if(teste2 < 0) { // erro, num. max de arquivos atingido
 			cerr << "erro, num. max de arquivos atingido\n";
-			return -1;
 		} else {
 			cout<<"arquivo "<< file_name <<"  criado\n";
-			return teste2;
 		}
 	} else { // file with same name already exists
 		cerr << "ja existe arquivo com o mesmo nome\n";
-		return teste;
 	}
 
 }
@@ -29,72 +30,149 @@ File::File(char * file_name){
 
 File::~File(){ //deve fechar o arquivo
 	
-	int teste = FileSystem::list_file(this.nome);//necessario implementar no FileSystem
-	FileSystem::dir[FileSystem::descricaoarquivo[teste].first_block].ref_count--;
-	FileSystem::descricaoarquivo[teste].active = 0;
-	cout<<"Arquivo fechado: " << Filesystem::dir[FileSystem::descricaoarquivo[teste].first_block].name);
+	int teste = FileSystem::_fs->list_file(this->nome);//necessario implementar no FileSystem
+	FileSystem::_fs->dir[FileSystem::_fs->descricaoarquivo[teste].first_block].ref_count--;
+	FileSystem::_fs->descricaoarquivo[teste].active = 0;
+	cout<<"Arquivo fechado: " << FileSystem::_fs->dir[FileSystem::_fs->descricaoarquivo[teste].first_block].name;
 }
 
 
-int File::read(int file, void * buf, size_t bytes){
+int File::read(int file, char * buf, size_t bytes){
 
-	if(!FileSystem::descricaoarquivo[file].active) {
+	if(!FileSystem::_fs->descricaoarquivo[file].active) {
 		cerr<<"Arquivo inexiste\n"<<endl;
 		return -1;
 	}
 
-	int i, j, count = 0;
-	int offset = FileSystem::descricaoarquivo[file].offset_read;
-	char buf[VirtualDisk::BLOCK_SIZE] = "";
+	int i, j, rcount = 0;
+	int offset = FileSystem::_fs->descricaoarquivo[file].offset_read;
+	char buf4[VirtualDisk::BLOCK_SIZE] = "";
 
-	int head = FileSystem::dir[descricaoarquivo[file].first_block].head;
-	int block_count = 0;
+	int head = FileSystem::_fs->dir[FileSystem::_fs->descricaoarquivo[file].first_block].head;
+	int bcount = 0;
+	
 	if(offset >= VirtualDisk::BLOCK_SIZE) {
-		if(head + FileSystem::BLOCKS_PER_FILE - 1 < head + offset/VirtualDisk::BLOCK_SIZE) {
+		if(head + BLC_P_F - 1 < head + offset/VirtualDisk::BLOCK_SIZE) {
 			cerr<<"memoria excedida\n"<<endl;
 			return -1;
 		}
-		head += offset/BLOCK_SIZE;
-		block_count = offset/BLOCK_SIZE;
-		offset = offset % BLOCK_SIZE;
+		head += offset/VirtualDisk::BLOCK_SIZE;
+		bcount = offset/VirtualDisk::BLOCK_SIZE;
+		offset = offset % VirtualDisk::BLOCK_SIZE;
 	}
 
-	block_read(head,buf);
+	FileSystem::_fs->disk()->read_block(head,buf4);
 
 	/* reading from the first block */
-	for(i=offset;i<BLOCK_SIZE;i++) {
-		dst[i-offset] = buf[i];
-		read_count++;
-		if(read_count == (int)numbyte) {
-			filedes[fd].read_offset += (int)read_count;
-			strcpy(buf,"");
-			return (int)read_count;
+	for(i=offset;i<VirtualDisk::BLOCK_SIZE;i++) {
+		buf[i-offset] = buf4[i];
+		rcount++;
+		if(rcount == (int)bytes) {
+			FileSystem::_fs->descricaoarquivo[file].offset_read += (int32_t)rcount;
+			strcpy(buf4,"");
+			return (int)rcount;
 		}
 	}
 
-	if(read_count == (int)numbyte) {
-		strcpy(buf,"");
-		filedes[fd].read_offset += (int)read_count;
-		return (int)read_count;
+	if(rcount == (int)bytes) {
+		strcpy(buf4,"");
+		FileSystem::_fs->descricaoarquivo[file].offset_read += (int)rcount;
+		return (int)rcount;
 	}
-		strcpy(buf,"");
-		/* read from other blocks or till EOF */
-	while(read_count < numbyte && block_count < BLOCKS_PER_FILE) {
-		block_read(head,buf);
-		//for(j=0;j<BLOCK_SIZE,i<strlen(dst);j++) {
-		for(j=0;j<BLOCK_SIZE;j++) {
-			dst[i-offset] = buf[j];
-			read_count++;
+
+		strcpy(buf4,"");
+	while(rcount < bytes && bcount < BLC_P_F) {
+		FileSystem::_fs->disk()->read_block(head,buf4);
+		for(j=0;j<VirtualDisk::BLOCK_SIZE;j++) {
+			buf[i-offset] = buf4[j];
+			rcount++;
 			i++;
-			if(read_count == (int)numbyte ) {
-				filedes[fd].read_offset += (int)read_count;
-				return (int)read_count;
+			if(rcount == (int)bytes) {
+				FileSystem::_fs->descricaoarquivo[file].offset_read += (int)rcount;
+				return (int)rcount;
 			}
 		}
-		block_count++;
+		bcount++;
 		head++;
-		strcpy(buf,"");
+		strcpy(buf4,"");
 	}
-	filedes[fd].read_offset += (int)read_count;
-	return read_count;
+	FileSystem::_fs->descricaoarquivo[file].offset_read += (int)rcount;
+	return rcount;
+}
+
+int File::write(int file, char * buf, size_t bytes){
+
+		int i, j, wcount = 0;
+		char buf2[VirtualDisk::BLOCK_SIZE] = "";
+
+		int offset = FileSystem::_fs->descricaoarquivo[file].offset_write;
+
+		int head = FileSystem::_fs->dir[FileSystem::_fs->descricaoarquivo[file].first_block].head;
+		int bcount2 = 0;
+
+		if(offset >= VirtualDisk::BLOCK_SIZE) {
+			if(head + BLC_P_F - 1 < head + offset/VirtualDisk::BLOCK_SIZE) {
+				cerr<<"memoria excedida\n"<<endl;
+				return -1;
+			}
+			head += offset/VirtualDisk::BLOCK_SIZE;
+			bcount2 = offset/VirtualDisk::BLOCK_SIZE;
+			offset = offset % VirtualDisk::BLOCK_SIZE;
+		}
+
+		FileSystem::_fs->disk()->read_block(head,buf2);
+
+		for(i=offset;i<VirtualDisk::BLOCK_SIZE;i++) {
+			if(wcount == (int)bytes or (i-offset) == strlen(buf)) {
+				FileSystem::_fs->disk()->write_block(head,buf2);
+				FileSystem::_fs->descricaoarquivo[file].offset_write += wcount;
+				return wcount;
+			}
+
+			buf2[i] = buf[i-offset];
+			wcount++;
+		}
+
+		FileSystem::_fs->disk()->write_block(head,buf2);
+
+		if(wcount == (int)bytes) {
+			FileSystem::_fs->descricaoarquivo[file].offset_write += wcount;
+			return wcount;
+		}
+
+		strcpy(buf2,"");
+
+		while(wcount < (int)bytes) {
+			for(j=0;j<VirtualDisk::BLOCK_SIZE;j++) {
+				buf2[j] = buf[i-offset];
+				wcount++;
+				i++;
+				if(i == strlen(buf) or wcount == (int)bytes) {
+					FileSystem::_fs->descricaoarquivo[file].offset_write += wcount;
+					FileSystem::_fs->disk()->write_block(head+bcount2-1,buf2);
+					return wcount;
+				}
+			}
+
+			FileSystem::_fs->disk()->write_block(head+bcount2-1,buf2);
+			bcount2++;
+		}
+
+		FileSystem::_fs->descricaoarquivo[file].offset_write += wcount;
+		return wcount;
+	cerr<<"Erro ao abrir arquivo\n"<<endl;
+	return -1;
+}
+
+int File::size(char * file_name){
+
+	int teste = FileSystem::_fs->list_file(file_name);
+	return FileSystem::_fs->dir[teste].size;
+
+}
+
+int File::lseek(int filedes, int offset){
+
+	FileSystem::_fs->descricaoarquivo[filedes].offset_write=offset;
+	FileSystem::_fs->descricaoarquivo[filedes].offset_read=offset;
 }

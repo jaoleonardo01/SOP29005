@@ -7,6 +7,7 @@
 #define _FATSYS -3;
 
 using namespace std;
+
 FileSystem * FileSystem::_fs;
 
 int FileSystem::create_file_system(char * disk_name){
@@ -15,69 +16,92 @@ int FileSystem::create_file_system(char * disk_name){
 		fprintf(stderr, "Nome do sistema de arquivos invalido!\n");
 		return 0;
 	}
-	// criar disco caso não exista
 	VirtualDisk::create_disk(disk_name);//cria disco
 	_fs = new FileSystem(disk_name); 
-        
+ 
 }
 
 FileSystem::FileSystem(char * disk_name) : _disk(disk_name)
 {
-	_disk.create_disk(disk_name); //Monta o Disco
+	_disk.create_disk(disk_name);
         fsys.data_ind=VirtualDisk::DISK_BLOCKS-1;
 	fsys.dir=1;
 	fsys.dir_len=65;
         fsys.begin_FAT=66;
-        fsys.len_FAT= 8; //segundo calculos chegamos a 8 blocos o espaçamento da FAT
-	memset(buf2,0,VirtualDisk::BLOCK_SIZE);//0 nas posições do buf2
-	memcpy(buf2,&fsys,sizeof(struct stc_bloco)); //carregando as info no stc_bloco
-	_disk.write_block(0,buf2); //escreve as info do buf2 no bloco 0
+        fsys.len_FAT= 8;
+	memset(buf2,0,VirtualDisk::BLOCK_SIZE);
+	memcpy(buf2,&fsys,sizeof(struct stc_bloco));
+	_disk.write_block(0,buf2);
 	cout << "Sistema de arquivos foi criado..." << endl;
 }
 
 int FileSystem::create_file(char * file_name){
-	int i;
-        int sum_b_l=fsys.begin_FAT + fsys.len_FAT;
-        stc_bloco * blc = new stc_bloco;
-        int32_t Buffer_FAT[VirtualDisk::DISK_BLOCKS];
-	for(i=0;i<MAX_FILES;i++) {
-		if(_fs->dir[i].active == 0) {
-			_fs->dir[i] = *new stc_diretorio;
+
+
+
+	for(int ki=0;ki<MAX_FILES;ki++) {
+		if(dir[ki].used == 0) {
+			dir[ki] = *new stc_diretorio;
 			struct stc_diretorio* entry = new stc_diretorio;
 			if(entry == NULL) {
-				cout<<"arquivo nao pode ser criado"<<endl;
+				cout<<"diretorio nao pode ser criado"<<endl;
 				return -1;
 			}
-                        _fs->dir[i].active=1;
-			strcpy(_fs->dir[i].name,file_name);
-			_fs->dir[i].size = 0;
-			_fs->dir[i].head = first_free_block();
-                        _fs->dir[i].ref_count=0;
-                        memset(buf2,0,VirtualDisk::BLOCK_SIZE); 
-                        memcpy(buf2,&dir,sizeof(struct stc_diretorio)); 
-	
-                        for (int aux1= blc->dir; aux1 < blc->dir_len+1; aux1++){
-                            _fs->_disk.write_block(aux1,buf2); 
-                        }
-                        for(int aux2; aux2 < sum_b_l; aux2++){
-                            Buffer_FAT[aux2]= _FATSYS;
-                        }
-                        for(int aux3=sum_b_l;aux3<VirtualDisk::DISK_BLOCKS;aux3++){
-                            Buffer_FAT[aux3] = _livre; 
-                        }
-			return i;
+
+			dir[ki].used = 1;
+			strcpy(dir[ki].name,file_name);
+			dir[ki].size = 0;
+			dir[ki].head = first_free_block();
+			dir[ki].ref_count = 0;
+			dir[ki].num_blocks = BLOCKS_PER_FILE;
+			return ki;
 		}
 	}
 }
 
 int FileSystem::delete_file(char * file_name){
+    int end_int = del_dir_file(file_name);
+    if (end_int > 0){
+        cout << "Arquivo " << file_name << "deletado!" << endl;
+    }
+}
 
+int FileSystem::del_dir_file(char * file_name){
+    int aux=0, aux1=0;
+    char buff[VirtualDisk::BLOCK_SIZE]= "";
+    for(;aux<MAX_FILES;aux++){
+        if(strcmp(_fs->dir[aux].name,file_name)== 0){
+            dir[aux].used = 0;
+            dir[aux].size = 0;
+            strcpy(dir[aux].name,"");
+            dir[aux].ref_count = 0;
+            for(;aux1<LOOP;aux1++){
+                if(descricaoarquivo[aux1].first_block == aux){
+                    descricaoarquivo[aux1].first_block = -1;
+                    descricaoarquivo[aux1].offset_read = 0;
+                    descricaoarquivo[aux1].offset_write = 0;
+                    descricaoarquivo[aux1].active = 0;
+                }
+            }
+            _fs->_disk.read_block(VirtualDisk::DISK_BLOCKS-1,buff);
+            for(int auxxx=0;auxxx<dir[aux].num_blocks;auxxx++){
+                buff[dir[aux].head + auxxx] = '\0';
+            }
+            dir[aux].head = -1;
+            dir[aux].num_blocks = 0;
+            _fs->_disk.write_block(VirtualDisk::DISK_BLOCKS-1,buff);
+            return aux;
+        }
+    }
+    return -1;
 }
 
 FileSystem::~FileSystem(){
   int c=0,aux=0,tamanho=fsys.dir_len;  
   char buffer[VirtualDisk::BLOCK_SIZE]="";
   char* ponteiro_char = "";
+  struct stc_diretorio* queue;
+  struct stc_diretorio* d;
   for(c=0;c<LOOP;c++){
       if(descricaoarquivo[c].active==1){
           descricaoarquivo[c].offset_read=0;
@@ -85,12 +109,12 @@ FileSystem::~FileSystem(){
           descricaoarquivo[c].first_block=0;     
       }
   }
-  for(aux=0;aux<tamanho;aux++){
+  for(aux=0,queue=(struct stc_diretorio*)d;aux<tamanho;aux++){
       memcpy(buffer,ponteiro_char,VirtualDisk::BLOCK_SIZE);
       _disk.write_block(fsys.data_ind,buffer);
       ponteiro_char += VirtualDisk::BLOCK_SIZE;
   }
-  free(dir);  
+  free(d);  
   cout << "Desmontou o sistema de arquivos" << endl;
 }
 int FileSystem::first_free_block()
@@ -115,6 +139,17 @@ int FileSystem::first_free_block()
 			return i;
 		}
 	}
+	return -1; 
+}
 
-	return -1; // no free blocks are available to allocate
+int FileSystem::list_file(char* file_name){
+
+
+	for(int ik=0;ik<MAX_FILES;ik++) {
+		if(dir[ik].used == 1 && strcmp(dir[ik].name,file_name) == 0) {
+			return ik;
+		}
+	}
+
+	return -1; // arquivo n encontrado
 }

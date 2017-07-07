@@ -1,0 +1,37 @@
+	/*int i;
+        int sum_b_l=fsys.begin_FAT + fsys.len_FAT;
+        stc_bloco * blc = new stc_bloco;
+        int32_t Buffer_FAT[VirtualDisk::DISK_BLOCKS];
+	for(i=0;i<MAX_FILES;i++) {
+		if(_fs->dir[i].used == 0) {
+			_fs->dir[i] = *new stc_diretorio;
+			struct stc_diretorio* entry = new stc_diretorio;
+			if(entry == NULL) {
+				cout<<"diretorio nao pode ser criado"<<endl;
+				return -1;
+			}
+                        _fs->dir[i].used=1;
+			strcpy(_fs->dir[i].name,file_name);
+			_fs->dir[i].size = 0;
+			_fs->dir[i].head = first_free_block();
+                        _fs->dir[i].ref_count=0;
+                        memset(buf2,0,VirtualDisk::BLOCK_SIZE); 
+                        memcpy(buf2,&dir,sizeof(struct stc_diretorio)); 
+                        for (int aux1= blc->dir; aux1 < blc->dir_len+1; aux1++){
+                            _fs->_disk.write_block(aux1,buf2); 
+                        }
+                        for(int aux2; aux2 < sum_b_l; aux2++){
+                            Buffer_FAT[aux2]= _FATSYS;
+                        }
+                        for(int aux3=sum_b_l;aux3<VirtualDisk::DISK_BLOCKS;aux3++){
+                            Buffer_FAT[aux3] = _livre; 
+                        }
+                        for(int auxx=0;auxx< blc->len_FAT;auxx++){
+                            memset(buf2,0,VirtualDisk::BLOCK_SIZE);
+                            memcpy(buf2,&Buffer_FAT[auxx*sizeof(buf2)/sizeof(int32_t)],sizeof(buf2));// info da fat no buf2
+                            _fs->_disk.write_block(blc->begin_FAT+auxx,buf2);         
+                        }
+                      	return i;
+		}
+	}
+}*/
